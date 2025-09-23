@@ -7,5 +7,6 @@ public class Hello {
         System.out.println("Hello from Poll SCM trigger!");
         System.out.println("Checking the trigger github");
         System.out.println("Hello from Poll SCM trigger!");
+        System.out.println("Hello from Poll SCM trigger!");
     }
 }
