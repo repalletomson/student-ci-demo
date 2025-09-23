@@ -5,5 +5,6 @@ public class Hello {
         System.out.println("Hello from Jenkins Pipeline !");
         System.out.println("Hello from Poll SCM trigger!");
         System.out.println("Hello from Poll SCM trigger!");
+        System.out.println("Checking the trigger github");
     }
 }
