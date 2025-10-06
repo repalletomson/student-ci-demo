@@ -1,55 +1,61 @@
 pipeline {
-  agent none   // no default agent, we'll choose per stage
-  triggers { githubPush() }   // auto-trigger from GitHub webhook
-  options { timestamps() }
+  agent none
+  options { timestamps(); timeout(time: 15, unit: 'MINUTES') }
+
 
   stages {
-    /* Stage 1: Run on Controller (built-in node) */
-    stage('Controller Stage') {
+
+
+    /* 1) WHERE AM I — run on Controller (built-in) */
+    stage('Where am I (Controller)') {
       agent { label 'built-in' }
       steps {
-        echo "Running on CONTROLLER"
         echo "NODE = ${env.NODE_NAME}"
         echo "WORKSPACE = ${env.WORKSPACE}"
       }
     }
-    /* Stage 2: Run on new Windows Agent */
-    stage('Windows Agent Stage') {
-      agent { label 'win' }   // will match win-agent-2
+
+
+    /* 2) BUILD & RUN — on Windows Agent (label: win) */
+    stage('Build on Windows Agent') {
+      agent { label 'win' }
       steps {
-        bat '''
-          echo Running on Windows Agent: %COMPUTERNAME%
-          echo Current DIR:
-          cd
-          echo JAVA Version:
-          java -version
-        '''
+        bat """
+        if exist out rmdir /s /q out
+        mkdir out
+        javac -d out src\\hello\\Hello.java
+        java -cp out hello.Hello
+        echo Build_OK > artifact.txt
+        """
       }
     }
-    /* Stage 3: Run in Parallel (Controller vs Windows Agent) */
-    stage('Parallel Test') {
+
+
+    /* 3) PARALLEL DEMO — Controller vs Agent at the same time */
+    stage('Parallel: Controller vs Agent') {
       parallel {
-        stage('Controller Lane') {
+        stage('Controller lane') {
           agent { label 'built-in' }
           steps {
-            echo "Hello from CONTROLLER in parallel"
+            echo "PARALLEL NODE = ${env.NODE_NAME}"
           }
         }
-        stage('Windows Lane') {
+        stage('Agent lane') {
           agent { label 'win' }
           steps {
-            bat "echo Hello from WINDOWS AGENT in parallel"
+            bat "echo PARALLEL NODE = %NODE_NAME%"
           }
         }
       }
     }
   }
+
+
   post {
     always {
-      node('win') {   // ensure we’re on a Windows workspace
-        archiveArtifacts artifacts: '**/*.log, artifact.txt', allowEmptyArchive: true
-      }
-    }
-  }
+        node('win'){
+      archiveArtifacts artifacts: 'artifact.txt, out/', allowEmptyArchive: false
+       }
+    }
+  }
 }
-
