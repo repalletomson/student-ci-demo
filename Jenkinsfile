@@ -1,12 +1,8 @@
 pipeline {
-  agent none
+  agent none 
   options { timestamps(); timeout(time: 15, unit: 'MINUTES') }
 
-
   stages {
-
-
-    /* 1) WHERE AM I — run on Controller (built-in) */
     stage('Where am I (Controller)') {
       agent { label 'built-in' }
       steps {
@@ -15,23 +11,19 @@ pipeline {
       }
     }
 
-
-    /* 2) BUILD & RUN — on Windows Agent (label: win) */
     stage('Build on Windows Agent') {
       agent { label 'win' }
       steps {
-        bat """
-        if exist out rmdir /s /q out
-        mkdir out
-        javac -d out src\\hello\\Hello.java
-        java -cp out hello.Hello
-        echo Build_OK > artifact.txt
-        """
+        bat '''
+          if exist out rmdir /s /q out
+          mkdir out
+          javac -d out src\\hello\\Hello.java
+          java -cp out hello.Hello
+          echo Build_OK > artifact.txt
+        '''
       }
     }
 
-
-    /* 3) PARALLEL DEMO — Controller vs Agent at the same time */
     stage('Parallel: Controller vs Agent') {
       parallel {
         stage('Controller lane') {
@@ -50,12 +42,9 @@ pipeline {
     }
   }
 
-
   post {
     always {
-        node('win'){
-      archiveArtifacts artifacts: 'artifact.txt, out/', allowEmptyArchive: false
-       }
-    }
-  }
+      archiveArtifacts artifacts: 'artifact.txt, out/**', allowEmptyArchive: false
+    }
+  }
 }
